@@ -1,0 +1,12 @@
+# Alternative to Vercel: Render Blueprint (New > Blueprint, point at your repo). Needs a paid instance for the persistent disk.
+services:
+  - type: web
+    name: aurelius
+    runtime: docker
+    plan: starter
+    disk: {name: data, mountPath: /data, sizeGB: 1}
+    envVars:
+      - {key: AURELIUS_LLM_API_KEY, sync: false}
+      - {key: AURELIUS_BOOTSTRAP_EMAIL, sync: false}
+      - {key: AURELIUS_BOOTSTRAP_PASSWORD, sync: false}
+      - {key: AURELIUS_DATA, value: yfinance}
