@@ -1,0 +1,822 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Aurelius</title>
+<meta name="description" content="Quantitative risk, regime, volatility, validation and execution models behind one API, with an analyst agent that shows its work.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 22V11a9 9 0 0 1 18 0v11h-5.5V12.2a3.5 3.5 0 0 0-7 0V22z' fill='%236A2C5B'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Marcellus&display=swap">
+<style nonce="__NONCE__">
+/* Layout: Aspen-style storefront. Transparent header over a full-bleed dark hero, sectioned page below, columned footer.
+   Palette: Tyrian purple on cool marble, basalt in dark mode and in the hero. */
+:root{
+  --bg:#EEEFEC; --panel:#F7F7F4; --panel2:#E4E6E1; --ink:#14171A; --ink2:#566068; --line:#D0D3CD;
+  --accent:#6A2C5B; --accent-ink:#FFFFFF; --accent-soft:#E7DAE3;
+  --calm:#2F6F68; --stress:#A9701A; --crisis:#B3392F; --pos:#2E7A55; --neg:#B3392F; --blue:#3C5D88;
+  --hero:#0E1113; --hero-ink:#ECE9E1; --hero-ink2:#A3AAB0; --hero-line:rgba(236,233,225,.16); --hero-accent:#D8A0CB;
+  --display:'Marcellus','Trajan Pro','Times New Roman',serif;
+  --body:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+  --gut:clamp(16px,4vw,44px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F1214; --panel:#161A1D; --panel2:#1F2427; --ink:#E9E7E0; --ink2:#9AA2A8; --line:#2B3236;
+    --accent:#D296C6; --accent-ink:#1A0E17; --accent-soft:#2A1D27;
+    --calm:#5DB5A9; --stress:#D9A441; --crisis:#E5695C; --pos:#5CBF8A; --neg:#E5695C; --blue:#8DB0DE;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F1214; --panel:#161A1D; --panel2:#1F2427; --ink:#E9E7E0; --ink2:#9AA2A8; --line:#2B3236;
+  --accent:#D296C6; --accent-ink:#1A0E17; --accent-soft:#2A1D27;
+  --calm:#5DB5A9; --stress:#D9A441; --crisis:#E5695C; --pos:#5CBF8A; --neg:#E5695C; --blue:#8DB0DE;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation:none!important;transition:none!important}}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 var(--body);-webkit-font-smoothing:antialiased;min-height:100vh;display:flex;flex-direction:column}
+a{color:inherit}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+h1,h2,h3,h4{text-wrap:balance;margin:0}
+h1,h2{font-family:var(--display);font-weight:400}
+.wrap{width:100%;max-width:1180px;margin-inline:auto;padding-inline:var(--gut)}
+.eyebrow{font:500 11.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink2)}
+code,.mono{font-family:var(--mono)}
+code{font-size:.9em;background:var(--panel2);padding:1px 5px;border-radius:3px}
+
+/* buttons */
+.btn{white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:8px;background:transparent;border:1px solid var(--line);border-radius:2px;padding:9px 16px;cursor:pointer;font:500 13.5px var(--body);text-decoration:none;letter-spacing:.02em;color:var(--ink)}
+.btn:hover{border-color:var(--accent)}
+.btn.p{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.p:hover{filter:brightness(1.08)}
+.btn.sm{padding:5px 10px;font-size:12.5px}
+.btn[disabled]{opacity:.55;cursor:not-allowed}
+.btn.onhero{border-color:var(--hero-line);color:var(--hero-ink)}
+.btn.onhero.p{background:var(--hero-ink);color:var(--hero);border-color:var(--hero-ink)}
+
+/* header: transparent over the hero, solid once scrolled or off the home page */
+.hdr{position:fixed;inset:0 0 auto 0;z-index:20;padding-top:env(safe-area-inset-top,0px);transition:background .25s,border-color .25s;border-bottom:1px solid transparent;color:var(--ink);background:var(--bg);border-bottom-color:var(--line)}
+.hdr.over{background:transparent;border-bottom-color:transparent;color:var(--hero-ink)}
+.hdr-in{display:flex;align-items:center;gap:28px;height:68px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;font:400 20px/1 var(--display);letter-spacing:.26em}
+.brand svg{width:26px;height:26px;flex:none}
+.brand svg path{fill:var(--accent)} .hdr.over .brand svg path{fill:var(--hero-accent)}
+.hdr.over .btn{color:var(--hero-ink);border-color:var(--hero-line)}
+.nav{display:flex;gap:26px;margin-left:12px}
+.nav a{text-decoration:none;font-size:14px;letter-spacing:.03em;padding:6px 0;border-bottom:1px solid transparent}
+.nav a:hover,.nav a[aria-current]{border-bottom-color:currentColor}
+.hdr-r{margin-left:auto;display:flex;align-items:center;gap:14px}
+.acct{display:inline-flex;align-items:center;gap:8px;text-decoration:none;font-size:14px;background:none;border:0;cursor:pointer;padding:6px 2px}
+.acct svg{width:20px;height:20px}
+.menu{display:none;background:none;border:0;padding:8px;cursor:pointer;color:inherit}
+.menu svg{width:24px;height:24px}
+@media (max-width:820px){
+  .menu{display:block}
+  .nav{display:none;position:absolute;top:100%;left:0;right:0;flex-direction:column;gap:0;margin:0;background:var(--bg);color:var(--ink);border-bottom:1px solid var(--line);padding:6px var(--gut) 14px}
+  .nav.open{display:flex}
+  .nav a{padding:12px 0;border-bottom:1px solid var(--line)}
+  .acct span{display:none}
+}
+main{flex:1;padding-top:68px}
+main.home{padding-top:0}
+
+/* hero */
+.hero{position:relative;background:var(--hero);color:var(--hero-ink);overflow:hidden;isolation:isolate}
+.hero canvas{position:absolute;inset:0;width:100%;height:100%;z-index:-2}
+.hero::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,var(--hero) 0,rgba(14,17,19,.92) 40%,rgba(14,17,19,0) 80%),linear-gradient(0deg,var(--hero) 0,rgba(14,17,19,0) 26%)}
+@media (max-width:820px){.hero::after{background:linear-gradient(180deg,var(--hero) 0,rgba(14,17,19,.94) 52%,rgba(14,17,19,.2) 100%)}}
+.hero-in{padding-block:176px 92px;max-width:1180px;margin-inline:auto;padding-inline:var(--gut)}
+.hero h1{font-size:clamp(36px,5.6vw,66px);line-height:1.04;letter-spacing:.01em;max-width:13em}
+.hero p.lede{max-width:34em;font-size:17px;color:var(--hero-ink2);margin:22px 0 32px}
+.hero .cta{display:flex;flex-wrap:wrap;gap:12px}
+.hero .cap{position:absolute;right:var(--gut);bottom:14px;font:400 11px var(--mono);color:var(--hero-ink2);max-width:46ch;text-align:right}
+.facts{background:var(--hero);color:var(--hero-ink);border-top:1px solid var(--hero-line)}
+.facts .wrap{display:grid;grid-template-columns:repeat(4,1fr);gap:0}
+.fact{padding:22px 20px 24px 0;border-left:1px solid var(--hero-line);padding-left:20px}
+.fact:first-child{border-left:0;padding-left:0}
+.fact b{display:block;font:400 22px var(--display);letter-spacing:.03em;margin-bottom:2px}
+.fact span{font-size:13px;color:var(--hero-ink2)}
+@media (max-width:820px){.facts .wrap{grid-template-columns:1fr 1fr}.fact:nth-child(3){border-left:0;padding-left:0}.hero .cap{display:none}.hero-in{padding-block:132px 210px}}
+
+/* sections */
+.sec{padding-block:84px}
+.sec.alt{background:var(--panel);border-block:1px solid var(--line)}
+.sec-h{display:flex;flex-direction:column;gap:12px;max-width:44em;margin-bottom:38px}
+.sec-h h2{font-size:clamp(28px,3.6vw,40px);line-height:1.1}
+.sec-h p{margin:0;color:var(--ink2);font-size:16px}
+.grid{display:grid;gap:18px;grid-template-columns:repeat(auto-fill,minmax(min(100%,238px),1fr))}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:2px;padding:22px 22px 20px;display:flex;flex-direction:column;gap:10px;text-decoration:none;min-width:0;transition:border-color .15s,transform .15s}
+.sec.alt .card{background:var(--bg)}
+a.card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.card svg.ic{width:30px;height:30px;color:var(--accent);fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.card h3{font:400 21px var(--display);letter-spacing:.02em}
+.card p{margin:0;color:var(--ink2);font-size:14px;flex:1}
+.card .tag{font:400 11.5px var(--mono);color:var(--accent)}
+.split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:clamp(28px,5vw,72px);align-items:center}
+@media (max-width:900px){.split{grid-template-columns:minmax(0,1fr)}}
+.split h2{font-size:clamp(28px,3.6vw,40px);line-height:1.1;margin:12px 0 16px}
+.split p{color:var(--ink2);margin:0 0 14px;max-width:34em}
+.ticks{list-style:none;margin:18px 0 0;padding:0;display:flex;flex-direction:column;gap:10px}
+.ticks li{display:flex;gap:12px;align-items:baseline;font-size:14.5px}
+.ticks li::before{content:"";flex:none;width:7px;height:7px;background:var(--accent);transform:translateY(-1px)}
+.cols3{display:grid;gap:0;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--line);background:var(--bg)}
+.cols3>div{padding:26px 26px 28px;border-left:1px solid var(--line);min-width:0}
+.cols3>div:first-child{border-left:0}
+.cols3 h3{font:400 22px var(--display);margin:8px 0 10px}
+.cols3 p{margin:0;color:var(--ink2);font-size:14px}
+@media (max-width:820px){.cols3{grid-template-columns:minmax(0,1fr)}.cols3>div{border-left:0;border-top:1px solid var(--line)}.cols3>div:first-child{border-top:0}}
+pre.wrap{white-space:pre-wrap;word-break:break-all}
+pre{margin:0;padding:14px 16px;background:var(--bg);border:1px solid var(--line);border-radius:2px;overflow:auto;font:12.5px/1.6 var(--mono);max-width:100%}
+.sec.alt pre{background:var(--panel)}
+.pre-h{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 0 6px;font:500 11.5px var(--mono);color:var(--ink2);letter-spacing:.06em;text-transform:uppercase}
+
+/* example transcript */
+.tx{background:var(--panel);border:1px solid var(--line);border-radius:2px;padding:20px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.sec.alt .tx{background:var(--bg)}
+.tx-note{font:400 11.5px var(--mono);color:var(--ink2)}
+
+/* footer */
+footer.ft{background:var(--hero);color:var(--hero-ink);margin-top:auto}
+.ft-in{display:grid;grid-template-columns:1.4fr repeat(3,1fr);gap:36px;padding-block:56px 36px}
+.ft h4{font:500 11.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--hero-ink2);margin-bottom:14px}
+.ft a{display:block;text-decoration:none;color:var(--hero-ink);padding:4px 0;font-size:14px}
+.ft a:hover{text-decoration:underline}
+.ft .brand svg path{fill:var(--hero-accent)}
+.ft p{color:var(--hero-ink2);font-size:13px;margin:14px 0 0;max-width:30em}
+.ft-b{border-top:1px solid var(--hero-line);padding-block:16px;font-size:12px;color:var(--hero-ink2);display:flex;flex-wrap:wrap;gap:6px 24px;justify-content:space-between}
+@media (max-width:820px){.ft-in{grid-template-columns:1fr 1fr}.ft-in>div:first-child{grid-column:1/-1}}
+
+/* page chrome for docs, models, security */
+.page{padding-block:56px 84px}
+.page-h{margin-bottom:34px;display:flex;flex-direction:column;gap:12px;max-width:48em}
+.page-h h1{font-size:clamp(32px,4.4vw,48px);line-height:1.08}
+.page-h p{margin:0;color:var(--ink2);font-size:16px}
+.doc{display:grid;grid-template-columns:200px minmax(0,1fr);gap:clamp(24px,4vw,56px);align-items:start}
+.toc{position:sticky;top:92px;display:flex;flex-direction:column;gap:2px;font-size:13.5px}
+.toc a{text-decoration:none;color:var(--ink2);padding:5px 0 5px 12px;border-left:2px solid var(--line)}
+.toc a:hover{color:var(--ink);border-left-color:var(--accent)}
+@media (max-width:900px){.doc{grid-template-columns:minmax(0,1fr)}.toc{display:none}}
+.prose{min-width:0;max-width:760px}
+.prose section{margin-bottom:46px;scroll-margin-top:90px}
+.prose h2{font-size:28px;margin-bottom:14px}
+.prose h3{font:600 15px var(--body);margin:24px 0 8px}
+.prose p,.prose li{color:var(--ink);max-width:68ch}
+.prose ul,.prose ol{padding-left:22px;display:flex;flex-direction:column;gap:6px}
+.prose .muted{color:var(--ink2)}
+.tblwrap{overflow-x:auto;border:1px solid var(--line);margin:12px 0}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th{font:600 11px var(--body);letter-spacing:.09em;text-transform:uppercase;color:var(--ink2);text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);white-space:nowrap;background:var(--panel)}
+td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td.m,td code{font-family:var(--mono);font-size:12.5px}
+td.r,th.r{text-align:right}
+.callout{border:1px solid var(--line);border-left:3px solid var(--accent);background:var(--panel);padding:14px 16px;margin:16px 0;max-width:68ch}
+.callout.warn{border-left-color:var(--stress)}
+.callout b{display:block;margin-bottom:6px}
+.callout ul{margin:0}
+.pill{display:inline-block;font:500 11px var(--mono);padding:2px 8px;border-radius:10px;border:1px solid var(--line);white-space:nowrap}
+.pill.ok{color:var(--pos);border-color:var(--pos)} .pill.no{color:var(--stress);border-color:var(--stress)}
+
+/* sign in */
+.signin{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);min-height:calc(100vh - 68px)}
+.signin-l{background:var(--hero);color:var(--hero-ink);padding:72px var(--gut);display:flex;flex-direction:column;justify-content:flex-end;gap:16px;position:relative;overflow:hidden;isolation:isolate}
+.signin-l canvas{position:absolute;inset:0;width:100%;height:100%;z-index:-1;opacity:.55}
+.signin-l h2{font-size:clamp(28px,3.4vw,40px);line-height:1.1;max-width:12em}
+.signin-l p{color:var(--hero-ink2);max-width:30em;margin:0}
+.signin-r{display:flex;align-items:center;padding:48px var(--gut)}
+.form{width:100%;max-width:400px;margin-inline:auto;display:flex;flex-direction:column;gap:18px}
+.form h1{font-size:34px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:12.5px;color:var(--ink2);letter-spacing:.02em}
+input[type=text],input[type=email],input[type=password],input[type=number],select,textarea{background:var(--bg);border:1px solid var(--line);border-radius:2px;padding:10px 12px;width:100%;min-width:0;font-size:14.5px}
+input.mono,textarea.mono,select.mono{font:13px var(--mono)}
+.err{color:var(--neg);font-size:13.5px;min-height:1.4em}
+.ok{color:var(--pos)}
+@media (max-width:820px){.signin{grid-template-columns:minmax(0,1fr)}.signin-l{padding-block:40px 28px;min-height:0}.signin-l canvas{display:none}}
+
+/* workspace */
+.app{padding-block:22px 48px}
+.apptabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:22px;overflow-x:auto}
+.apptabs a{padding:10px 14px;text-decoration:none;font-size:14px;color:var(--ink2);border-bottom:2px solid transparent;white-space:nowrap}
+.apptabs a:hover{color:var(--ink)}
+.apptabs a[aria-current]{color:var(--accent);border-bottom-color:var(--accent);font-weight:500}
+.banner{border:1px solid var(--stress);color:var(--stress);padding:9px 14px;font-size:13.5px;margin-bottom:16px;background:var(--panel)}
+.agent{display:grid;grid-template-columns:230px minmax(0,1fr);gap:24px;align-items:start}
+.hist{display:flex;flex-direction:column;gap:10px;position:sticky;top:92px;max-height:calc(100vh - 120px);overflow:auto}
+.conv{display:flex;align-items:center;gap:4px;border-left:2px solid transparent}
+.conv.cur{border-left-color:var(--accent);background:var(--panel)}
+.conv button.t{flex:1;text-align:left;background:none;border:0;padding:8px 8px;cursor:pointer;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.conv button.x{background:none;border:0;color:var(--ink2);cursor:pointer;padding:6px 8px;font-size:16px;line-height:1}
+.conv button.x:hover{color:var(--neg)}
+.hist .none{font-size:13px;color:var(--ink2)}
+@media (max-width:900px){.agent{grid-template-columns:minmax(0,1fr)}.hist{position:static;max-height:240px}}
+.chat{min-width:0;display:flex;flex-direction:column;gap:14px}
+.log{display:flex;flex-direction:column;gap:22px;min-height:340px}
+.msg{display:flex;flex-direction:column;gap:8px;min-width:0}
+.who{font:500 11px var(--mono);letter-spacing:.14em;color:var(--ink2)}
+.msg.user .body{background:var(--panel2);padding:11px 14px;border-radius:2px;white-space:pre-wrap;max-width:46em;align-self:flex-start}
+.msg.bot .who{color:var(--accent)}
+.body p{margin:0 0 10px;max-width:70ch}.body p:last-child{margin-bottom:0}
+.body h4{font:600 14px var(--body);margin:14px 0 6px}
+.body ul,.body ol{margin:0 0 10px;padding-left:22px;display:flex;flex-direction:column;gap:4px}
+.body table{font-size:13px}
+.tool{border:1px solid var(--line);background:var(--panel);border-radius:2px;min-width:0;max-width:760px}
+.tool-h{display:flex;align-items:center;gap:10px;padding:9px 12px;font:500 12.5px var(--mono);flex-wrap:wrap}
+.tool-h .nm{color:var(--ink)}
+.tool-s{color:var(--ink2);margin-left:auto}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--ink2);flex:none}
+.dot.run{background:var(--stress);animation:pulse 1s ease-in-out infinite}
+.dot.ok{background:var(--pos)} .dot.bad{background:var(--neg)}
+@keyframes pulse{50%{opacity:.35}}
+.tool-viz{padding:4px 12px 10px}
+.tool details{border-top:1px solid var(--line);font-size:13px}
+.tool summary{cursor:pointer;padding:8px 12px;color:var(--ink2);font:500 12px var(--mono)}
+.tool details>div{padding:0 12px 12px;display:flex;flex-direction:column;gap:8px}
+.tool pre{max-height:300px;font-size:12px}
+.src{font:400 12px var(--mono);color:var(--ink2);line-height:1.5;word-break:break-word}
+.composer{display:flex;gap:10px;align-items:flex-end;position:sticky;bottom:0;background:var(--bg);padding:10px 0 4px}
+.composer textarea{resize:none;min-height:46px;max-height:180px}
+.fine{margin:0;font-size:12.5px;color:var(--ink2)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.chip{background:var(--panel);border:1px solid var(--line);border-radius:2px;padding:8px 12px;font-size:13.5px;cursor:pointer;text-align:left}
+.chip:hover{border-color:var(--accent)}
+.intro{border:1px solid var(--line);background:var(--panel);padding:22px;max-width:760px}
+.intro h2{font-size:26px;margin-bottom:8px}
+.intro p{margin:0;color:var(--ink2);max-width:60ch}
+.working{font:400 12.5px var(--mono);color:var(--ink2)}
+.bars{display:flex;flex-direction:column;gap:7px;font-size:12.5px}
+.bar-r{display:grid;grid-template-columns:minmax(64px,110px) minmax(0,1fr) 92px;gap:10px;align-items:center}
+.bar-r .l{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar-r .t{position:relative;height:12px;background:var(--panel2);border-radius:2px}
+.bar-r .f{position:absolute;top:0;bottom:0;border-radius:2px}
+.bar-r .z{position:absolute;top:-2px;bottom:-2px;width:1px;background:var(--ink2)}
+.bar-r .v{font:400 12px var(--mono);text-align:right;white-space:nowrap}
+.bars .ttl{font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink2);margin-bottom:2px}
+.cv text{font:10.5px var(--mono);fill:var(--ink2)}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--ink2);margin:2px 0 4px}
+.legend i{display:inline-block;width:9px;height:9px;margin-right:6px;border-radius:2px;vertical-align:-1px}
+.two{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:900px){.two{grid-template-columns:minmax(0,1fr)}}
+.list{display:flex;flex-direction:column;border:1px solid var(--line);background:var(--panel)}
+.list button{display:flex;flex-direction:column;gap:2px;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:12px 14px;cursor:pointer;border-left:2px solid transparent}
+.list button:last-child{border-bottom:0}
+.list button:hover{background:var(--panel2)}
+.list button.cur{border-left-color:var(--accent);background:var(--bg)}
+.list b{font-weight:500}.list span{font:400 12px var(--mono);color:var(--ink2)}
+.panel{background:var(--panel);border:1px solid var(--line);padding:20px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
+.row .field{flex:1;min-width:150px}
+.pos-t input{padding:7px 9px;font:13px var(--mono)}
+.pos-t td{padding:5px 8px 5px 0;border:0}
+.pos-t th{background:none;border:0;padding:0 8px 4px 0}
+.totals{font:400 12.5px var(--mono);color:var(--ink2)}
+.keybox{border:1px solid var(--accent);background:var(--accent-soft);padding:14px;display:flex;flex-direction:column;gap:8px}
+.keybox code{background:var(--bg);padding:8px 10px;word-break:break-all;display:block;font-size:13px}
+</style>
+</head>
+<body>
+<noscript><p style="padding:24px">Aurelius needs JavaScript to run.</p></noscript>
+<header class="hdr over" id="hdr"><div class="wrap hdr-in">
+  <a class="brand" href="#/" aria-label="Aurelius home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 22V11a9 9 0 0 1 18 0v11h-5.5V12.2a3.5 3.5 0 0 0-7 0V22z"/></svg><span>AURELIUS</span></a>
+  <nav class="nav" id="nav" aria-label="Main"></nav>
+  <div class="hdr-r" id="hdr-r"></div>
+  <button class="menu" id="menu" type="button" aria-label="Menu" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+</div></header>
+<main id="view"></main>
+<footer class="ft" id="ft"></footer>
+
+<script nonce="__NONCE__">
+'use strict';
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const S={me:null,health:null,catalog:null,convs:[],cur:null,busy:false};
+const HIDE=['list_portfolios','get_portfolio'];
+const NAV=[['Models','#/models'],['Agent','#/agent'],['Docs','#/docs'],['Security','#/security']];
+
+/* ---------- api ---------- */
+async function api(path,opt={}){
+  const o={method:opt.method||'GET',headers:{'X-Requested-With':'aurelius'},credentials:'same-origin'};
+  if(opt.body!==undefined){o.headers['Content-Type']='application/json';o.body=JSON.stringify(opt.body);}
+  const r=await fetch(path,o);let j=null;try{j=await r.json();}catch(e){}
+  if(!r.ok){
+    const d=j&&j.detail;
+    const msg=typeof d==='string'?d:Array.isArray(d)?d.map(x=>(x.loc?x.loc.filter(p=>p!=='body').join('.')+': ':'')+x.msg).join('; '):(j===null&&(r.status===404||r.status>=500))?'The Aurelius server is not running at this address (HTTP '+r.status+'). This page is being served without server.py. See the README: "If sign-in says 404".':'Request failed ('+r.status+')';
+    const e=new Error(msg);e.status=r.status;throw e;
+  }
+  return j;
+}
+async function streamChat(message,conversation_id,on){
+  const r=await fetch('/v1/agent/chat',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-Requested-With':'aurelius'},body:JSON.stringify({message,conversation_id})});
+  if(!r.ok){let m='Request failed ('+r.status+')';try{const j=await r.json();m=typeof j.detail==='string'?j.detail:m}catch(e){}const e=new Error(m);e.status=r.status;throw e;}
+  const rd=r.body.getReader(),dec=new TextDecoder();let buf='';
+  for(;;){
+    const {value,done}=await rd.read();if(done)break;
+    buf+=dec.decode(value,{stream:true});let i;
+    while((i=buf.indexOf('\n\n'))>=0){
+      const ch=buf.slice(0,i);buf=buf.slice(i+2);
+      const ev=/^event: (.*)$/m.exec(ch),da=/^data: (.*)$/m.exec(ch);
+      if(ev&&da){try{on(ev[1],JSON.parse(da[1]));}catch(e){console.error(e);}}
+    }
+  }
+}
+const copy=async(txt,btn)=>{try{await navigator.clipboard.writeText(txt);if(btn){const o=btn.textContent;btn.textContent='Copied';setTimeout(()=>btn.textContent=o,1300);}}catch(e){if(btn)btn.textContent='Select and copy manually';}};
+const fmtTs=s=>s?s.replace('T',' ').replace('Z',' UTC'):'—';
+
+/* ---------- icons ---------- */
+const ICON={
+  market_summary:'<path d="M6 24V14M12 24V8M18 24V16M24 24V5"/>',
+  portfolio_risk:'<path d="M3 24C8 24 10 5 15 5s7 19 12 19"/><path d="M21 24v-7"/>',
+  regime_detection:'<path d="M3 20h6v-7h6v9h5V8h7"/>',
+  volatility_forecast:'<path d="M3 15 27 5M3 15h24M3 15l24 10"/>',
+  stress_test:'<path d="M15 4v15M9 14l6 6 6-6M5 25h20"/>',
+  asset_correlation:'<rect x="4" y="4" width="8" height="8"/><rect x="18" y="4" width="8" height="8"/><rect x="4" y="18" width="8" height="8"/><rect x="18" y="18" width="8" height="8"/>',
+  deflated_sharpe:'<circle cx="15" cy="15" r="11"/><path d="m9.5 15.5 4 4 7-8"/>',
+  execution_cost:'<path d="M4 6h7v7h7v7h8"/>'
+};
+const icon=n=>'<svg class="ic" viewBox="0 0 30 30" aria-hidden="true">'+(ICON[n]||ICON.market_summary)+'</svg>';
+
+/* ---------- chrome ---------- */
+function renderChrome(){
+  const route=currentRoute();
+  $('#nav').innerHTML=NAV.map(n=>'<a href="'+n[1]+'"'+(location.hash.startsWith(n[1])?' aria-current="page"':'')+'>'+n[0]+'</a>').join('');
+  const person='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4.5 4-6.5 8-6.5s7 2 8 6.5"/></svg>';
+  $('#hdr-r').innerHTML=S.me
+    ?'<a class="acct" href="#/app" title="'+esc(S.me.email)+'">'+person+'<span>Workspace</span></a><button class="btn sm" id="signout" type="button">Sign out</button>'
+    :'<a class="acct" href="#/signin">'+person+'<span>Sign in</span></a>';
+  const so=$('#signout');if(so)so.onclick=async()=>{try{await api('/v1/auth/logout',{method:'POST'});}catch(e){}S.me=null;S.cur=null;location.hash='#/';renderChrome();};
+  const hp=S.health&&S.health.data_provider==='synthetic';
+  $('#ft').innerHTML='<div class="wrap ft-in"><div><a class="brand" href="#/"><svg viewBox="0 0 24 24" aria-hidden="true" width="24" height="24"><path d="M3 22V11a9 9 0 0 1 18 0v11h-5.5V12.2a3.5 3.5 0 0 0-7 0V22z"/></svg><span>AURELIUS</span></a><p>Risk, regime, volatility, validation and execution models behind one API, with an analyst agent that shows its work.</p></div>'+
+    '<div><h4>Product</h4><a href="#/models">Models</a><a href="#/agent">Agent</a><a href="#/app">Workspace</a></div>'+
+    '<div><h4>Developers</h4><a href="#/docs">API reference</a><a href="#/docs">Authentication</a><a href="#/docs">Errors</a></div>'+
+    '<div><h4>Trust</h4><a href="#/security">Security</a><a href="#/models">Methods</a><a href="#/signin">Sign in</a></div></div>'+
+    '<div class="wrap ft-b"><span>Analytics only. Not investment advice. Past data does not predict future returns.</span><span>Data: '+(S.health?esc(S.health.data_provider==='yfinance'?'Yahoo Finance public data via yfinance':S.health.data_provider==='synthetic'?'simulated prices':S.health.data_provider):'unavailable')+' · v'+esc(S.health?S.health.version:'—')+'</span></div>';
+  setHeaderMode();
+}
+function setHeaderMode(){
+  const home=currentRoute().name==='home';
+  $('#hdr').classList.toggle('over',home&&scrollY<24);
+  $('#view').classList.toggle('home',home);
+}
+addEventListener('scroll',setHeaderMode,{passive:true});
+$('#menu').onclick=()=>{const n=$('#nav'),o=n.classList.toggle('open');$('#menu').setAttribute('aria-expanded',o);};
+
+/* ---------- router ---------- */
+function currentRoute(){
+  const p=(location.hash.replace(/^#\/?/,'')||'').split('/');
+  if(!p[0])return{name:'home'};
+  if(p[0]==='agent')return{name:'home',scroll:'agent'};
+  if(p[0]==='models')return p[1]?{name:'model',id:p[1]}:{name:'models'};
+  if(['docs','security','signin'].includes(p[0]))return{name:p[0]};
+  if(p[0]==='app')return{name:'app',tab:p[1]||'agent'};
+  return{name:'home'};
+}
+async function route(){
+  const r=currentRoute(),v=$('#view');
+  $('#nav').classList.remove('open');
+  renderChrome();
+  if(r.name!=='home'||!S.catalog)await ensureCatalog();
+  const V={home:viewHome,models:viewModels,model:viewModel,docs:viewDocs,security:viewSecurity,signin:viewSignin,app:viewApp}[r.name];
+  v.innerHTML='';
+  await V(v,r);
+  if(r.scroll){const e=document.getElementById(r.scroll);if(e)e.scrollIntoView();}else scrollTo(0,0);
+  setHeaderMode();
+}
+async function ensureCatalog(){if(S.catalog)return;try{S.catalog=await api('/v1/catalog');}catch(e){S.catalog=null;}}
+const models=()=>S.catalog?S.catalog.models.filter(m=>!HIDE.includes(m.name)):[];
+
+/* ---------- home ---------- */
+function viewHome(v){
+  const ms=models();
+  v.innerHTML=
+  '<section class="hero"><canvas id="hero-cv" aria-hidden="true"></canvas><div class="hero-in"><div class="eyebrow" style="color:var(--hero-ink2)">Quantitative models · One API</div>'+
+  '<h1 style="margin-top:16px">Quantitative risk, in a form you can audit.</h1>'+
+  '<p class="lede">Models for portfolio risk, regimes, volatility, validation and execution, behind one API and an analyst agent that shows every call it makes. Each result names its data, its method and its limits.</p>'+
+  '<div class="cta">'+(S.me?'<a class="btn p onhero" href="#/app">Open workspace</a>':'<a class="btn p onhero" href="#/signin">Sign in</a>')+'<a class="btn onhero" href="#/models">Read the methods</a></div></div>'+
+  '<div class="cap">Illustration: a simulated portfolio, a three-state regime model shading the path, and a 60-day forecast fan.</div></section>'+
+  '<section class="facts"><div class="wrap"><div class="fact"><b>'+(ms.length||8)+' models</b><span>One request format, one set of conventions</span></div><div class="fact"><b>Methods published</b><span>Formulas, assumptions and limits on every model page</span></div><div class="fact"><b>Every result cites its data</b><span>Source, window, tickers used and any dropped</span></div><div class="fact"><b>Per-account data</b><span>Portfolios and conversations are never shared</span></div></div></section>'+
+  '<section class="sec"><div class="wrap"><div class="sec-h"><span class="eyebrow">The models</span><h2>Built from the tools desks already use.</h2><p>VaR and CVaR with a backtest, hidden Markov regimes, GARCH forecasts, deflated Sharpe ratios and Almgren-Chriss execution. The vocabulary is the one your risk team already speaks.</p></div>'+
+  '<div class="grid">'+(ms.length?ms.map(m=>'<a class="card" href="#/models/'+esc(m.name)+'">'+icon(m.name)+'<span class="tag">POST /v1/models/'+esc(m.name)+'</span><h3>'+esc(m.title)+'</h3><p>'+esc(m.summary)+'</p></a>').join(''):'<p class="fine">The model catalog is unavailable right now.</p>')+'</div></div></section>'+
+  '<section class="sec alt" id="agent"><div class="wrap split"><div><span class="eyebrow">The agent</span><h2>Ask in plain language. See the calls.</h2>'+
+  '<p>The agent turns a question into model calls, runs them, and explains the result. It can only call the same read-only models the API exposes, and every call is shown with its inputs, its raw output and its data source.</p>'+
+  '<ul class="ticks"><li>Every number in an answer comes from a tool result in the conversation.</li><li>Works on your saved portfolios without moving them anywhere else.</li><li>Cannot trade, edit portfolios or run code.</li></ul>'+
+  '<div style="margin-top:26px">'+(S.me?'<a class="btn p" href="#/app">Open the agent</a>':'<a class="btn p" href="#/signin">Sign in to use it</a>')+'</div></div>'+
+  '<div class="tx" aria-label="Example conversation"><div class="msg user"><span class="who">YOU</span><div class="body">How bad is a 20% equity drawdown for the Core Book?</div></div>'+
+  '<div class="msg bot"><span class="who">AURELIUS</span><div class="tool"><div class="tool-h"><span class="dot ok"></span><span class="nm">stress_test</span><span class="tool-s">412 ms</span></div><div class="tool-viz"><div class="bars"><div class="ttl">Implied return by asset (%)</div>'+
+  [['SPY',-.20,'−20.0%'],['QQQ',-.25,'−25.1%'],['GLD',.02,'+2.1%'],['TLT',.06,'+6.4%']].map(r=>barRow(r[0],r[1],r[2],true,.26)).join('')+'</div></div><details><summary>Inputs and result</summary><div><pre>{ "portfolio": "Core Book",\n  "shocks": { "SPY": -0.2 } }</pre><div class="src">Source: yfinance · 756 daily returns · EWMA covariance with shrinkage</div></div></details></div>'+
+  '<div class="body"><p>A 20% fall in SPY implies about <strong>−9.1%</strong> on the book, or <strong>−$2.3M</strong> on $25M. TLT is the only meaningful offset. The result assumes today\'s correlations hold in a sell-off, which they often do not.</p></div></div>'+
+  '<div class="tx-note">Illustrative transcript. The figures are examples, not market data.</div></div></div></section>'+
+  '<section class="sec"><div class="wrap"><div class="sec-h"><span class="eyebrow">Nothing hidden</span><h2>Every result carries its own audit trail.</h2></div>'+
+  '<div class="cols3"><div><span class="eyebrow">Method</span><h3>The formula is on the page.</h3><p>Each model page lists the estimator, the equations and the assumptions, written for people who have built these before.</p></div>'+
+  '<div><span class="eyebrow">Data</span><h3>The source travels with the number.</h3><p>Results include the provider, as-of time, window, tickers used and tickers dropped. Simulated data is labelled as simulated.</p></div>'+
+  '<div><span class="eyebrow">Limits</span><h3>Known weaknesses, stated.</h3><p>In-sample tests are called in-sample. Linear impact is called linear. Each model lists what it cannot see.</p></div></div>'+
+  '<div style="margin-top:28px;max-width:600px"><div class="pre-h"><span>The data block on every market result</span></div><pre>"data": {\n  "source": "yfinance (Yahoo Finance public data)",\n  "asof": "2026-10-06 14:02 UTC",\n  "price_basis": "daily adjusted close, simple returns",\n  "window": {\n    "start": "2023-10-05", "end": "2026-10-05",\n    "n_returns": 756\n  },\n  "tickers": ["SPY", "TLT", "GLD"],\n  "dropped": {}\n}</pre></div></div></section>';
+  heroCanvas($('#hero-cv'));
+}
+
+/* hero illustration */
+function heroCanvas(cv,opt){
+  opt=opt||{};if(!cv)return;const ctx=cv.getContext('2d'),reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const rnd=(a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296})(11);
+  const gauss=()=>{let u=0;while(!u)u=rnd();return Math.sqrt(-2*Math.log(u))*Math.cos(6.2831853*rnd());};
+  const N=300,P=[[.985,.012,.003],[.04,.94,.02],[.02,.07,.91]],mult=[.8,1.7,3.2],dr=[.0008,-.0004,-.003],st=[],cum=[];let s=0,c=0;
+  for(let i=0;i<N;i++){const u=rnd();let a=0,ns=2;for(let k=0;k<3;k++){a+=P[s][k];if(u<a){ns=k;break;}}s=ns;st.push(s);c+=dr[s]+.0085*mult[s]*gauss();cum.push(c);}
+  const col=['93,181,169','217,164,65','229,105,92'];
+  function draw(p){
+    const dpr=Math.min(devicePixelRatio||1,2),W=cv.clientWidth,H=cv.clientHeight;if(!W||!H)return;
+    cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);
+    const narrow=W<700,px=W*(opt.px||(narrow?.62:.70)),lo=Math.min(...cum),hi=Math.max(...cum),y0=H*(opt.y0!=null?opt.y0:(narrow?.76:.22)),y1=H*(opt.y1!=null?opt.y1:(narrow?.95:.74));
+    const X=i=>i/(N-1)*px,Y=v=>y1-(v-lo)/(hi-lo)*(y1-y0)*0.9;
+    ctx.strokeStyle='rgba(236,233,225,.07)';ctx.lineWidth=1;for(let k=1;k<6;k++){const y=H*k/6;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+    const n=Math.max(2,Math.floor(p*N));
+    for(let i=0,j=0;i<n;i++){if(i===n-1||st[i+1]!==st[j]){ctx.fillStyle='rgba('+col[st[j]]+','+(st[j]?(st[j]===1?.12:.2):.05)+')';ctx.fillRect(X(j),0,X(i+1)-X(j)+1,H);j=i+1;}}
+    ctx.beginPath();for(let i=0;i<n;i++){const x=X(i),y=Y(cum[i]);i?ctx.lineTo(x,y):ctx.moveTo(x,y);}ctx.strokeStyle='rgba(236,233,225,.92)';ctx.lineWidth=1.6;ctx.lineJoin='round';ctx.stroke();
+    const fa=Math.max(0,(p-.72)/.28);
+    if(fa>0){
+      const H2=60,sd=.0085*1.05,x0=px,x1=W*.975,y_0=Y(cum[N-1]),k=(lo,hi)=>hi-lo;const sc=(y1-y0)*0.9/(Math.max(...cum)-Math.min(...cum));
+      const band=(z,al)=>{const g=ctx.createLinearGradient(x0,0,x1,0);g.addColorStop(0,'rgba(210,150,198,'+al*fa+')');g.addColorStop(1,'rgba(210,150,198,'+al*fa*.12+')');ctx.beginPath();for(let d=0;d<=H2;d++){const x=x0+(x1-x0)*d/H2,y=y_0-z*sd*Math.sqrt(d)*sc;d?ctx.lineTo(x,y):ctx.moveTo(x,y);}for(let d=H2;d>=0;d--){const x=x0+(x1-x0)*d/H2,y=y_0+z*sd*Math.sqrt(d)*sc;ctx.lineTo(x,y);}ctx.closePath();ctx.fillStyle=g;ctx.fill();};
+      band(1.645,.16);band(.674,.26);
+      ctx.beginPath();ctx.moveTo(x0,y_0);ctx.lineTo(x1,y_0);ctx.strokeStyle='rgba(216,160,203,'+.9*fa+')';ctx.lineWidth=1.4;ctx.stroke();
+      ctx.fillStyle='rgba(163,170,176,'+fa+')';ctx.font='11px "IBM Plex Mono",monospace';ctx.fillText('forecast, 60 days',x0+8,Math.min(H-10,y_0+sc*sd*1.645*Math.sqrt(H2)+16));
+    }
+  }
+  let t0=null;function tick(ts){if(!cv.isConnected)return;if(t0===null)t0=ts;const p=Math.min(1,(ts-t0)/1700),e=1-Math.pow(1-p,3);draw(e);if(p<1)requestAnimationFrame(tick);}
+  if(reduce)draw(1);else requestAnimationFrame(tick);
+  let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{if(cv.isConnected)draw(1);},120);});
+}
+
+/* ---------- models ---------- */
+function viewModels(v){
+  const ms=models();
+  v.innerHTML='<div class="wrap page"><div class="page-h"><span class="eyebrow">Models</span><h1>Eight models, one set of conventions.</h1><p>Each model takes a JSON request and returns decimal fractions, a data block and, where it matters, a warning. Pick one to see its method, its limits and its inputs.</p></div>'+
+  '<div class="grid">'+ms.map(m=>'<a class="card" href="#/models/'+esc(m.name)+'">'+icon(m.name)+'<span class="tag">'+esc(m.name)+'</span><h3>'+esc(m.title)+'</h3><p>'+esc(m.summary)+'</p></a>').join('')+'</div></div>';
+}
+function schemaTable(sc){
+  const req=new Set(sc.required||[]);
+  const rows=Object.entries(sc.properties||{}).map(([k,p])=>{
+    const b=p.anyOf?(p.anyOf.find(a=>a.type!=='null')||{}):p;
+    let t=b.enum?'one of '+b.enum.join(', '):b.type==='array'?'array of '+((b.items&&b.items.type)||'any'):b.type==='object'?(b.additionalProperties?'object: ticker to number':'object'):(b.type||'any');
+    if(b.minimum!==undefined||b.maximum!==undefined)t+=' ('+(b.minimum!==undefined?b.minimum:'')+' to '+(b.maximum!==undefined?b.maximum:'')+')';
+    if(b.exclusiveMinimum!==undefined)t+=' (> '+b.exclusiveMinimum+')';
+    const d=(p.default===undefined||p.default===null)?(req.has(k)?'required':'optional'):JSON.stringify(p.default);
+    return '<tr><td class="m">'+esc(k)+'</td><td>'+esc(t)+'</td><td class="m">'+esc(d)+'</td><td>'+esc(p.description||'')+'</td></tr>';
+  }).join('');
+  return '<div class="tblwrap"><table><thead><tr><th>Field</th><th>Type</th><th>Default</th><th>Meaning</th></tr></thead><tbody>'+(rows||'<tr><td colspan="4">No inputs.</td></tr>')+'</tbody></table></div>';
+}
+const curl=(name,body)=>'curl -s '+location.origin+'/v1/models/'+name+' \\\n  -H "Authorization: Bearer $AURELIUS_KEY" \\\n  -H "Content-Type: application/json" \\\n  -d \''+JSON.stringify(body).replace(/'/g,"'\\''")+'\'';
+function viewModel(v,r){
+  const m=(S.catalog&&S.catalog.models.find(x=>x.name===r.id));
+  if(!m){v.innerHTML='<div class="wrap page"><div class="page-h"><h1>Model not found</h1><p><a href="#/models">See all models</a></p></div></div>';return;}
+  v.innerHTML='<div class="wrap page"><div class="page-h"><a class="eyebrow" href="#/models" style="text-decoration:none">← All models</a><h1>'+esc(m.title)+'</h1><p>'+esc(m.summary)+'</p><div><span class="pill">POST /v1/models/'+esc(m.name)+'</span> <span class="pill '+(m.agent_tool?'ok':'no')+'">'+(m.agent_tool?'available to the agent':'API only')+'</span></div></div>'+
+  '<div class="doc"><nav class="toc" aria-label="On this page"><a href="#m-method" data-s="m-method">Method</a><a href="#m-limits" data-s="m-limits">Limits</a><a href="#m-input" data-s="m-input">Inputs</a><a href="#m-ex" data-s="m-ex">Example</a></nav><div class="prose">'+
+  '<section id="m-method"><h2>Method</h2><ol>'+m.method.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol></section>'+
+  '<section id="m-limits"><h2>What it cannot see</h2><div class="callout warn"><b>Read these before relying on a number.</b><ul>'+m.limits.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></div></section>'+
+  '<section id="m-input"><h2>Inputs</h2>'+schemaTable(m.input_schema)+'</section>'+
+  '<section id="m-ex"><h2>Example</h2><div class="pre-h"><span>Request</span><button class="btn sm" id="cp" type="button">Copy</button></div><pre class="wrap" id="ex-pre"></pre><p class="muted" style="margin-top:14px">'+(S.me?'<a href="#/app/playground">Run it in the playground</a> with your session.':'<a href="#/signin">Sign in</a> to run it in the playground, or call it with an API key.')+'</p></section></div></div></div>';
+  const c=curl(m.name,m.example);$('#ex-pre').textContent=c;$('#cp').onclick=e=>copy(c,e.target);
+  $$('.toc a').forEach(a=>a.onclick=e=>{e.preventDefault();document.getElementById(a.dataset.s).scrollIntoView();});
+}
+
+/* ---------- docs ---------- */
+function viewDocs(v){
+  const E=[['POST','/v1/auth/login','Sign in (browser session)'],['POST','/v1/auth/logout','Sign out'],['GET','/v1/me','Current account'],['POST','/v1/models/{name}','Run a model'],['GET','/v1/catalog','Models, schemas and methods (public)'],['GET','/v1/portfolios','Your saved portfolios'],['PUT','/v1/portfolios/{name}','Save or replace a portfolio'],['DELETE','/v1/portfolios/{name}','Delete a portfolio'],['POST','/v1/agent/chat','Ask the agent (server-sent events)'],['GET','/v1/conversations','Your conversations'],['GET','/v1/keys','Your API keys'],['POST','/v1/keys','Create an API key (browser session only)'],['DELETE','/v1/keys/{id}','Revoke an API key'],['GET','/v1/audit','Your activity log'],['GET','/v1/health','Provider and agent status (public)']];
+  const ERR=[['400','The model could not answer: for example, no saved portfolio with that name.'],['401','Missing, invalid or expired credentials.'],['403','Browser request without the X-Requested-With header, or an API key trying to create keys.'],['404','Unknown model, portfolio, key or conversation. Other accounts\' items also return 404.'],['422','The request did not validate. The body lists each failing field.'],['429','Too many failed sign-ins (5 per account and address in 15 minutes) or too many agent messages.'],['502','The market-data provider failed or returned too little history. No substitute data is used.']];
+  v.innerHTML='<div class="wrap page"><div class="page-h"><span class="eyebrow">Documentation</span><h1>API reference</h1><p>JSON over HTTPS. Authenticate with a bearer API key from code, or a browser session from the workspace.</p></div>'+
+  '<div class="doc"><nav class="toc" aria-label="On this page">'+[['d-start','Quickstart'],['d-auth','Authentication'],['d-conv','Conventions'],['d-ep','Endpoints'],['d-agent','Agent stream'],['d-err','Errors']].map(a=>'<a href="#'+a[0]+'" data-s="'+a[0]+'">'+a[1]+'</a>').join('')+'</nav><div class="prose">'+
+  '<section id="d-start"><h2>Quickstart</h2><p>Create a key in the workspace under API keys, then call any model. This request returns 99% one-day VaR and CVaR for a three-asset portfolio.</p>'+
+  '<div class="pre-h"><span>curl</span><button class="btn sm" data-c="curl" type="button">Copy</button></div><pre class="wrap" id="q-curl"></pre>'+
+  '<div class="pre-h" style="margin-top:16px"><span>Python</span><button class="btn sm" data-c="py" type="button">Copy</button></div><pre id="q-py"></pre>'+
+  '<p class="muted" style="margin-top:14px">Every model is listed with its inputs and method under <a href="#/models">Models</a>.</p></section>'+
+  '<section id="d-auth"><h2>Authentication</h2><p>Send <code>Authorization: Bearer aur_…</code>. Keys belong to the account that created them, see only that account\'s portfolios, and are stored as hashes. A key is shown once at creation and can be revoked at any time.</p>'+
+  '<p>The website uses an HttpOnly, SameSite=Strict session cookie. Browser requests that change state must also send <code>X-Requested-With: aurelius</code>. Accounts are issued by an administrator; there is no public sign-up.</p></section>'+
+  '<section id="d-conv"><h2>Conventions</h2><ul>'+((S.catalog&&S.catalog.conventions)||[]).map(x=>'<li>'+esc(x).replace(/`([^`]+)`/g,'<code>$1</code>')+'</li>').join('')+'</ul>'+
+  '<div class="pre-h" style="margin-top:14px"><span>Shape of a response</span></div><pre>{\n  "model": "portfolio_risk",\n  "elapsed_ms": 183,\n  "result": {\n    "volatility": { "daily": 0.0061, "annualised": 0.097 },\n    "var":  { "historical": { "fraction": 0.0142, "usd": 710000 }, … },\n    "risk_contribution": [ … ],\n    "data": { "source": "…", "asof": "…", "window": { … }, "tickers": [ … ], "dropped": {} }\n  }\n}</pre></section>'+
+  '<section id="d-ep"><h2>Endpoints</h2><div class="tblwrap"><table><thead><tr><th>Method</th><th>Path</th><th>Purpose</th></tr></thead><tbody>'+E.map(e=>'<tr><td class="m">'+e[0]+'</td><td class="m">'+esc(e[1])+'</td><td>'+esc(e[2])+'</td></tr>').join('')+'</tbody></table></div></section>'+
+  '<section id="d-agent"><h2>Agent stream</h2><p><code>POST /v1/agent/chat</code> with <code>{"message": "...", "conversation_id": null}</code> returns <code>text/event-stream</code>. Reuse the returned <code>conversation_id</code> to continue. Events:</p>'+
+  '<div class="tblwrap"><table><thead><tr><th>Event</th><th>Data</th></tr></thead><tbody><tr><td class="m">conversation</td><td>id and title</td></tr><tr><td class="m">text</td><td>a block of assistant text</td></tr><tr><td class="m">tool_call</td><td>id, model name, inputs</td></tr><tr><td class="m">tool_result</td><td>id, ok, elapsed ms, full result</td></tr><tr><td class="m">error</td><td>message to show the user</td></tr><tr><td class="m">done</td><td>conversation id, token usage, models used</td></tr></tbody></table></div>'+
+  '<div class="callout"><b>The agent is read-only.</b>It can call the models and read saved portfolios. It cannot write, trade or run code, and it stops after 8 tool steps per message.</div></section>'+
+  '<section id="d-err"><h2>Errors</h2><div class="tblwrap"><table><thead><tr><th>Status</th><th>Meaning</th></tr></thead><tbody>'+ERR.map(e=>'<tr><td class="m">'+e[0]+'</td><td>'+esc(e[1])+'</td></tr>').join('')+'</tbody></table></div></section></div></div></div>';
+  const body={weights:{SPY:.5,TLT:.3,GLD:.2},confidence:.99,horizon_days:1,nav_usd:50000000};
+  const c=curl('portfolio_risk',body),py='import os, requests\n\nr = requests.post(\n    "'+location.origin+'/v1/models/portfolio_risk",\n    headers={"Authorization": "Bearer " + os.environ["AURELIUS_KEY"]},\n    json='+JSON.stringify(body)+',\n    timeout=60,\n)\nr.raise_for_status()\nprint(r.json()["result"]["var"]["historical"])';
+  $('#q-curl').textContent=c;$('#q-py').textContent=py;
+  $$('[data-c]').forEach(b=>b.onclick=()=>copy(b.dataset.c==='curl'?c:py,b));
+  $$('.toc a').forEach(a=>a.onclick=e=>{e.preventDefault();document.getElementById(a.dataset.s).scrollIntoView();});
+}
+
+/* ---------- security ---------- */
+function viewSecurity(v){
+  const yes=[['Invite-only accounts','An administrator adds each person by email from the Admin page and gives them a one-time temporary password. There is no public sign-up page.'],
+    ['Passwords','At least 12 characters, stored as salted scrypt hashes. Five failed sign-ins lock that account and address for 15 minutes.'],
+    ['Sessions','HttpOnly, SameSite=Strict, Secure cookies that expire after 12 hours. State-changing requests need a custom header. A strict content security policy with per-request nonces is sent with the site.'],
+    ['API keys','Shown once, stored as SHA-256 hashes, revocable, scoped to their owner. A key cannot create other keys.'],
+    ['Account separation','Portfolios, conversations and keys are queried by account in every code path, and tests check that one account cannot read, run or continue another\'s.'],
+    ['Audit log','Sign-ins, failures, model calls (the model name only), key changes and agent messages. Portfolio contents are never written to the log.'],
+    ['A read-only agent','It can call the models and read your saved portfolios. It cannot write, trade, browse or run code.']];
+  const no=[['Single sign-on and two-factor sign-in','Not built. Required by most institutional buyers.'],['Encryption of the database at rest','Not built into the application. Your database host may encrypt storage; confirm that with them before relying on it.'],['Separate tenants per firm','All accounts share one database, separated by account. Firms that need hard isolation should run their own deployment.'],['Licensed market data','The default feed is Yahoo Finance public data through yfinance, which Yahoo\'s terms limit to personal use. A licensed feed is needed before serving firms.'],['Independent security review','Not done.']];
+  v.innerHTML='<div class="wrap page"><div class="page-h"><span class="eyebrow">Security</span><h1>What protects your data, and what does not yet.</h1><p>Firms should know both lists before they put positions into any system.</p></div><div class="prose" style="max-width:820px">'+
+  '<section><h2>In place</h2><div class="tblwrap"><table><tbody>'+yes.map(r=>'<tr><td style="width:30%"><b>'+esc(r[0])+'</b></td><td>'+esc(r[1])+'</td></tr>').join('')+'</tbody></table></div></section>'+
+  '<section><h2>Where data goes</h2><p>Model calls run on the server you deploy. The agent is different: your message and the tool results it reads are sent to the model server this deployment is configured to use'+(S.health&&S.health.agent_provider?' (currently <b>'+esc(S.health.agent_provider)+'</b>)':'')+' to generate each reply. The model is an open Llama model, but a hosted endpoint is still a third party. If that is not acceptable for your data, use the API without the agent, or point the agent at a model server your firm hosts.</p></section>'+
+  '<section><h2>Not yet built</h2><div class="tblwrap"><table><tbody>'+no.map(r=>'<tr><td style="width:30%"><b>'+esc(r[0])+'</b> <span class="pill no">gap</span></td><td>'+esc(r[1])+'</td></tr>').join('')+'</tbody></table></div></section></div></div>';
+}
+
+/* ---------- sign in ---------- */
+function viewSignin(v){
+  if(S.me){location.hash='#/app';return;}
+  v.innerHTML='<div class="signin"><div class="signin-l"><canvas id="si-cv" aria-hidden="true"></canvas><span class="eyebrow" style="color:var(--hero-ink2)">Aurelius workspace</span><h2>Your portfolios stay yours.</h2><p>Saved portfolios, conversations and API keys are visible only to the account that created them.</p></div>'+
+  '<div class="signin-r"><form class="form" id="lf" novalidate><h1>Sign in</h1><div class="field"><label for="em">Email</label><input id="em" type="email" autocomplete="username" required></div><div class="field"><label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password" required></div><div class="err" id="le" role="alert"></div><button class="btn p" id="lb" type="submit">Sign in</button><p class="fine">Accounts are issued by your Aurelius administrator. There is no public sign-up.</p></form></div></div>';
+  heroCanvas($('#si-cv'),{y0:.10,y1:.46,px:.62});
+  $('#em').focus();
+  $('#lf').onsubmit=async e=>{
+    e.preventDefault();const b=$('#lb'),er=$('#le');er.textContent='';
+    if(!$('#em').value||!$('#pw').value){er.textContent='Enter your email and password.';return;}
+    b.disabled=true;b.textContent='Signing in…';
+    try{await api('/v1/auth/login',{method:'POST',body:{email:$('#em').value,password:$('#pw').value}});S.me=await api('/v1/me');location.hash='#/app';renderChrome();}
+    catch(x){er.textContent=x.message;b.disabled=false;b.textContent='Sign in';$('#pw').value='';}
+  };
+}
+
+/* ---------- charts ---------- */
+function niceTicks(lo,hi,n){const span=hi-lo;if(!(span>0))return[lo];const raw=span/n,p=Math.pow(10,Math.floor(Math.log10(raw))),f=raw/p,st=(f<1.5?1:f<3?2:f<7?5:10)*p,out=[];for(let v=Math.ceil(lo/st-1e-9)*st;v<=hi+1e-9;v+=st)out.push(+v.toPrecision(10));return out;}
+function chart(el,o){
+  const W=Math.max(260,el.clientWidth||520),H=o.h||190,m={l:42,r:10,t:8,b:22},iw=W-m.l-m.r,ih=H-m.t-m.b,f=v=>v.toFixed(1);
+  const xs=o.x,X=v=>m.l+(v-xs[0])/(xs[1]-xs[0])*iw;let lo=Infinity,hi=-Infinity;
+  const sc=v=>{if(v<lo)lo=v;if(v>hi)hi=v;};(o.lines||[]).forEach(l=>l.y.forEach(sc));(o.polys||[]).forEach(p=>{p.lo.forEach(sc);p.hi.forEach(sc);});if(o.zero)sc(0);
+  const pad=(hi-lo)*.06||1;lo-=pad;hi+=pad;const Y=v=>m.t+ih-(v-lo)/(hi-lo)*ih;let g='';
+  (o.bands||[]).forEach(b=>g+='<rect x="'+f(X(b.x0))+'" y="'+m.t+'" width="'+f(Math.max(1,X(b.x1)-X(b.x0)))+'" height="'+ih+'" style="fill:var('+b.c+')" opacity="'+b.op+'"/>');
+  niceTicks(lo,hi,4).forEach(t=>g+='<line x1="'+m.l+'" x2="'+(W-m.r)+'" y1="'+f(Y(t))+'" y2="'+f(Y(t))+'" style="stroke:var(--line)"/><text x="'+(m.l-6)+'" y="'+f(Y(t)+3.5)+'" text-anchor="end">'+(o.yf?o.yf(t):t)+'</text>');
+  niceTicks(xs[0],xs[1],Math.max(3,Math.floor(iw/110))).forEach(t=>g+='<text x="'+f(X(t))+'" y="'+(H-6)+'" text-anchor="middle">'+(o.xf?o.xf(t):t)+'</text>');
+  if(o.zero&&lo<0&&hi>0)g+='<line x1="'+m.l+'" x2="'+(W-m.r)+'" y1="'+f(Y(0))+'" y2="'+f(Y(0))+'" style="stroke:var(--ink2)" stroke-dasharray="2 3"/>';
+  (o.polys||[]).forEach(p=>{let d='M'+f(X(p.x[0]))+','+f(Y(p.hi[0]));for(let i=1;i<p.x.length;i++)d+='L'+f(X(p.x[i]))+','+f(Y(p.hi[i]));for(let i=p.x.length-1;i>=0;i--)d+='L'+f(X(p.x[i]))+','+f(Y(p.lo[i]));g+='<path d="'+d+'Z" style="fill:var('+p.c+')" opacity="'+p.op+'"/>';});
+  (o.lines||[]).forEach(l=>{let d='';l.y.forEach((y,i)=>{d+=(i?'L':'M')+f(X(l.x[i]))+','+f(Y(y));});g+='<path d="'+d+'" fill="none" style="stroke:var('+l.c+')" stroke-width="'+(l.w||1.5)+'" stroke-linejoin="round"/>';});
+  el.innerHTML='<svg class="cv" viewBox="0 0 '+W+' '+H+'" width="'+W+'" height="'+H+'" role="img" aria-label="'+esc(o.label||'chart')+'">'+g+'</svg>';
+}
+const legend=a=>'<div class="legend">'+a.map(x=>'<span><i style="background:var('+x[0]+')"></i>'+esc(x[1])+'</span>').join('')+'</div>';
+function barRow(label,val,note,signed,max){
+  const m=max||1,w=Math.min(1,Math.abs(val)/m);
+  const f=signed?'left:'+(val<0?(.5-w/2)*100:50)+'%;width:'+(w/2*100)+'%;background:var(--'+(val<0?'neg':'pos')+')':'left:0;width:'+(w*100)+'%;background:var(--accent)';
+  return '<div class="bar-r"><div class="l" title="'+esc(label)+'">'+esc(label)+'</div><div class="t"><div class="f" style="'+f+'"></div>'+(signed?'<div class="z" style="left:50%"></div>':'')+'</div><div class="v">'+esc(note)+'</div></div>';
+}
+function renderViz(el,z){
+  if(!z)return;
+  if(z.type==='bars'){
+    const max=Math.max(...z.rows.map(r=>Math.abs(r.value)),1e-9);
+    el.innerHTML='<div class="bars"><div class="ttl">'+esc(z.title)+'</div>'+z.rows.map(r=>barRow(r.label,r.value,z.signed?(r.value*100).toFixed(1)+'%':(r.value*100).toFixed(1)+'% · '+r.note,z.signed,max)).join('')+'</div>';
+  }else if(z.type==='regime'){
+    const n=z.cum.length,cols=['--calm','--stress','--crisis'],bands=[];
+    for(let i=0,j=0;i<n;i++){if(i===n-1||z.state[i+1]!==z.state[j]){bands.push({x0:j-.5,x1:i+.5,c:cols[z.state[j]],op:z.state[j]?.2:.1});j=i+1;}}
+    el.innerHTML=legend(z.labels.map((l,i)=>[cols[i],l]))+'<div></div>';
+    chart(el.lastChild,{h:180,x:[0,n-1],lines:[{x:z.cum.map((_,i)=>i),y:z.cum,c:'--ink'}],bands,yf:t=>t.toFixed(0)+'%',xf:t=>z.dates[Math.round(t)]?z.dates[Math.round(t)].slice(0,7):'',label:'Cumulative return shaded by regime'});
+  }else if(z.type==='fan'){
+    const b=z.bands,x=z.x;
+    el.innerHTML=legend([['--accent','Median'],['--accent','25% to 75%'],['--blue','5% to 95%']])+'<div></div>';
+    chart(el.lastChild,{h:180,x:[x[0],x[x.length-1]],zero:true,polys:[{x,lo:b['0.05'],hi:b['0.95'],c:'--blue',op:.18},{x,lo:b['0.25'],hi:b['0.75'],c:'--accent',op:.28}],lines:[{x,y:b['0.5'],c:'--accent',w:2}],yf:t=>t.toFixed(1)+'%',xf:t=>t,label:'Forecast fan of cumulative return'});
+  }
+}
+
+/* ---------- markdown (escaped first, then a small safe subset) ---------- */
+function inl(s){return s.replace(/`([^`]+)`/g,'<code>$1</code>').replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');}
+function md(src){
+  const L=esc(src).split('\n'),isL=l=>/^\s*([-*•]|\d+\.)\s+/.test(l),isT=l=>/^\s*\|.*\|\s*$/.test(l);let out='',i=0;
+  while(i<L.length){
+    const l=L[i];if(!l.trim()){i++;continue;}let m;
+    if((m=/^(#{1,4})\s+(.*)$/.exec(l))){out+='<h4>'+inl(m[2])+'</h4>';i++;continue;}
+    if(isT(l)&&i+1<L.length&&/^\s*\|[\s:|-]+\|\s*$/.test(L[i+1])){
+      const cells=r=>r.trim().replace(/^\||\|$/g,'').split('|').map(c=>c.trim()),head=cells(l);i+=2;const rows=[];
+      while(i<L.length&&isT(L[i])){rows.push(cells(L[i]));i++;}
+      out+='<div class="tblwrap"><table><thead><tr>'+head.map(c=>'<th>'+inl(c)+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+r.map(c=>'<td>'+inl(c)+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>';continue;
+    }
+    if(isL(l)){const ord=/^\s*\d+\./.test(l),it=[];while(i<L.length&&isL(L[i])){it.push(L[i].replace(/^\s*([-*•]|\d+\.)\s+/,''));i++;}out+=(ord?'<ol>':'<ul>')+it.map(x=>'<li>'+inl(x)+'</li>').join('')+(ord?'</ol>':'</ul>');continue;}
+    const p=[L[i]];i++;while(i<L.length&&L[i].trim()&&!/^#{1,4}\s/.test(L[i])&&!isT(L[i])&&!isL(L[i])){p.push(L[i]);i++;}
+    out+='<p>'+inl(p.join(' '))+'</p>';
+  }
+  return out;
+}
+
+/* ---------- workspace ---------- */
+const TABS=[['agent','Agent'],['portfolios','Portfolios'],['playground','Playground'],['keys','API keys'],['activity','Activity']];
+async function viewApp(v,r){
+  if(!S.me){try{S.me=await api('/v1/me');renderChrome();}catch(e){location.hash='#/signin';return;}}
+  if(S.me.must_change){forcePw(v);return;}
+  const tabs=TABS.concat(S.me.role==='admin'?[['admin','Admin']]:[]);
+  const tab=tabs.some(t=>t[0]===r.tab)?r.tab:'agent';
+  v.innerHTML='<div class="wrap app"><div class="apptabs" role="navigation" aria-label="Workspace">'+tabs.map(t=>'<a href="#/app/'+t[0]+'"'+(t[0]===tab?' aria-current="page"':'')+'>'+t[1]+'</a>').join('')+'</div>'+
+    (S.health&&S.health.data_provider==='synthetic'?'<div class="banner" role="status">Simulated data mode. Results use simulated prices, not market data.</div>':'')+'<div id="appbody"></div></div>';
+  try{await APP[tab]($('#appbody'));}
+  catch(e){if(e.status===401){S.me=null;renderChrome();location.hash='#/signin';}else $('#appbody').innerHTML='<p class="err">'+esc(e.message)+'</p>';}
+}
+const APP={};
+
+/* agent */
+const SUGGEST=['Which volatility regime is a 60/40 portfolio of SPY and TLT in right now?','Run a 99% risk report on 50% SPY, 30% TLT and 20% GLD with $50M NAV.','What happens to that portfolio if SPY falls 20%?','Estimate the cost of selling $25M of AAPL over two days.','I tried 150 strategies and the best has a Sharpe of 1.4 over 1,000 days. Does it hold up?'];
+APP.agent=async function(body){
+  body.innerHTML='<div class="agent"><aside class="hist"><button class="btn p" id="newc" type="button">New conversation</button><div id="convs"></div></aside>'+
+  '<section class="chat"><div id="banner"></div><div class="log" id="log" aria-live="polite"></div>'+
+  '<form class="composer" id="cf"><label class="sr" for="msg">Ask Aurelius</label><textarea id="msg" rows="2" maxlength="4000" placeholder="Ask about risk, regimes, volatility, stress, validation or execution"></textarea><button class="btn p" id="send" type="submit">Send</button></form>'+
+  '<p class="fine">Answers come from read-only model calls shown above each reply. This describes risk; it is not investment advice.</p></section></div>';
+  const [convs,ports]=await Promise.all([api('/v1/conversations'),api('/v1/portfolios')]);
+  S.convs=convs;S.ports=ports;
+  if(S.health&&!S.health.agent_enabled)$('#banner').innerHTML='<div class="banner">The agent is not enabled on this server (no model endpoint configured). The Playground and API still work.</div>';
+  drawConvs();showIntro();
+  $('#newc').onclick=()=>{S.cur=null;drawConvs();showIntro();$('#msg').focus();};
+  const ta=$('#msg');
+  ta.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('#cf').requestSubmit();}});
+  ta.addEventListener('input',()=>{ta.style.height='auto';ta.style.height=Math.min(180,ta.scrollHeight)+'px';});
+  $('#cf').onsubmit=e=>{e.preventDefault();const t=ta.value.trim();if(t&&!S.busy){ta.value='';ta.style.height='auto';ask(t);}};
+  const pre=sessionStorageGet('aurelius_prefill');if(pre){sessionStorageSet('aurelius_prefill','');ask(pre);}
+};
+function sessionStorageGet(k){try{return sessionStorage.getItem(k)||'';}catch(e){return '';}}
+function sessionStorageSet(k,v){try{sessionStorage.setItem(k,v);}catch(e){}}
+function drawConvs(){
+  const el=$('#convs');if(!el)return;
+  el.innerHTML=S.convs.length?S.convs.map(c=>'<div class="conv'+(c.id===S.cur?' cur':'')+'"><button class="t" data-id="'+esc(c.id)+'" type="button" title="'+esc(c.title)+'">'+esc(c.title)+'</button><button class="x" data-del="'+esc(c.id)+'" type="button" aria-label="Delete conversation">×</button></div>').join(''):'<div class="none">No conversations yet.</div>';
+  $$('[data-id]',el).forEach(b=>b.onclick=()=>openConv(b.dataset.id));
+  $$('[data-del]',el).forEach(b=>b.onclick=async()=>{try{await api('/v1/conversations/'+b.dataset.del,{method:'DELETE'});}catch(e){}S.convs=S.convs.filter(c=>c.id!==b.dataset.del);if(S.cur===b.dataset.del){S.cur=null;showIntro();}drawConvs();});
+}
+function showIntro(){
+  const names=(S.ports||[]).map(p=>p.name),sug=names.slice(0,2).map(n=>'Run a risk report on my '+n+' portfolio.').concat(SUGGEST).slice(0,6);
+  $('#log').innerHTML='<div class="intro"><h2>What do you want to know?</h2><p>Ask in plain language. The agent picks the models, runs them on current data, and shows each call so you can check it.</p><div class="chips">'+sug.map(s=>'<button class="chip" type="button">'+esc(s)+'</button>').join('')+'</div></div>';
+  $$('.chip').forEach(c=>c.onclick=()=>ask(c.textContent));
+}
+async function openConv(id){
+  if(S.busy)return;S.cur=id;drawConvs();
+  const c=await api('/v1/conversations/'+id),log=$('#log');log.innerHTML='';
+  for(const m of c.messages){
+    if(m.role==='user'){log.appendChild(userMsg(m.text));continue;}
+    const b=botMsg();
+    if(m.text)b.text(m.text);
+    (m.tools||[]).forEach(t=>{const card=b.tool(t);let res=null;try{res=JSON.parse(t.result);}catch(e){}card.done({ok:t.ok!==false,ms:null,result:res||{raw:String(t.result||'')}});});
+    log.appendChild(b.el);
+  }
+  log.lastChild&&log.lastChild.scrollIntoView({block:'end'});
+}
+function userMsg(t){const d=document.createElement('div');d.className='msg user';d.innerHTML='<span class="who">YOU</span><div class="body"></div>';$('.body',d).textContent=t;return d;}
+function botMsg(){
+  const el=document.createElement('div');el.className='msg bot';el.innerHTML='<span class="who">AURELIUS</span>';const tools={};
+  return{el,
+    text(t){const d=document.createElement('div');d.className='body';d.innerHTML=md(t);el.appendChild(d);},
+    working(on){let w=$('.working',el);if(on&&!w){w=document.createElement('div');w.className='working';w.textContent='Working…';el.appendChild(w);}else if(!on&&w)w.remove();else if(on&&w)el.appendChild(w);},
+    tool(call){
+      const d=document.createElement('div');d.className='tool';
+      d.innerHTML='<div class="tool-h"><span class="dot run"></span><span class="nm"></span><span class="tool-s">running…</span></div><div class="tool-viz"></div><details><summary>Inputs and result</summary><div><pre class="in"></pre><div class="src"></div><pre class="out"></pre></div></details>';
+      $('.nm',d).textContent=call.name;$('.in',d).textContent=JSON.stringify(call.input,null,2);$('.out',d).textContent='…';
+      el.appendChild(d);
+      const api2={done(r){
+        $('.dot',d).className='dot '+(r.ok?'ok':'bad');$('.tool-s',d).textContent=(r.ok?'':'error · ')+(r.ms!=null?r.ms+' ms':'');
+        const res=r.result||{},dt=res.data;
+        if(dt&&dt.window)$('.src',d).textContent='Source: '+dt.source+' · as of '+dt.asof+' · '+dt.window.start+' to '+dt.window.end+' · '+dt.window.n_returns+' daily returns · '+(dt.tickers||[]).join(', ')+(dt.dropped&&Object.keys(dt.dropped).length?' · dropped: '+Object.keys(dt.dropped).join(', '):'')+((dt.notes||[]).length?' · '+dt.notes.join(' '):'');
+        else if(!r.ok)$('.src',d).textContent='This call failed. The agent was told why and may retry.';
+        let s=JSON.stringify(res,null,2);if(s.length>40000)s=s.slice(0,40000)+'\n… (truncated for display)';$('.out',d).textContent=s;
+        if(r.ok)renderViz($('.tool-viz',d),r.viz);
+        if(!r.ok)$('details',d).open=true;
+      }};
+      tools[call.id]=api2;return api2;
+    },
+    get(id){return tools[id];}};
+}
+async function ask(text){
+  if(S.busy)return;if(S.health&&!S.health.agent_enabled){$('#banner').innerHTML='<div class="banner">The agent is not enabled on this server (no model endpoint configured).</div>';return;}
+  S.busy=true;$('#send').disabled=true;const log=$('#log');if($('.intro',log))log.innerHTML='';
+  log.appendChild(userMsg(text));const bot=botMsg();log.appendChild(bot.el);bot.working(true);bot.el.scrollIntoView({block:'end'});
+  try{
+    await streamChat(text,S.cur,(ev,d)=>{
+      if(ev==='conversation'){if(!S.cur){S.cur=d.id;S.convs.unshift({id:d.id,title:d.title});drawConvs();}}
+      else if(ev==='text'){bot.working(false);bot.text(d.text);bot.working(true);}
+      else if(ev==='tool_call'){bot.working(false);bot.tool(d);bot.working(true);}
+      else if(ev==='tool_result'){const t=bot.get(d.id);if(t)t.done(d);}
+      else if(ev==='error'){bot.working(false);const e=document.createElement('div');e.className='banner';e.textContent=d.message;bot.el.appendChild(e);}
+      else if(ev==='done'){bot.working(false);}
+      bot.el.scrollIntoView({block:'end'});
+    });
+  }catch(e){bot.working(false);const x=document.createElement('div');x.className='banner';x.textContent=e.message;bot.el.appendChild(x);if(e.status===401){S.me=null;renderChrome();location.hash='#/signin';}}
+  bot.working(false);S.busy=false;const sb=$('#send');if(sb)sb.disabled=false;
+  try{S.convs=await api('/v1/conversations');drawConvs();}catch(e){}
+}
+
+/* portfolios */
+APP.portfolios=async function(body){
+  let list=await api('/v1/portfolios'),cur=null;
+  const blank=()=>({name:'',nav_usd:10000000,weights:{SPY:.5,TLT:.3,GLD:.2},isNew:true});
+  const draw=()=>{
+    const p=cur;
+    body.innerHTML='<div class="two"><div><div class="list">'+(list.length?list.map(x=>'<button type="button" data-n="'+esc(x.name)+'" class="'+(p&&!p.isNew&&p.name===x.name?'cur':'')+'"><b>'+esc(x.name)+'</b><span>$'+(x.nav_usd/1e6).toFixed(1)+'M · '+Object.keys(x.weights).length+' positions</span></button>').join(''):'<div style="padding:14px" class="fine">No saved portfolios yet.</div>')+'</div><div style="margin-top:12px"><button class="btn" id="np" type="button">New portfolio</button></div></div>'+
+    '<div>'+(p?'<div class="panel"><div class="row"><div class="field"><label for="pn">Name</label><input id="pn" type="text" maxlength="60" value="'+esc(p.name)+'"'+(p.isNew?'':' readonly')+'></div><div class="field"><label for="pv">NAV (US dollars)</label><input id="pv" type="number" min="1" step="1000000" value="'+p.nav_usd+'"></div></div>'+
+    '<div class="tblwrap" style="border:0;margin:0"><table class="pos-t"><thead><tr><th>Ticker</th><th>Weight %</th><th></th></tr></thead><tbody id="pr"></tbody></table></div><div class="row"><button class="btn sm" id="ap" type="button">Add position</button><span class="totals" id="tt"></span></div><div class="err" id="pe" role="alert"></div>'+
+    '<div class="row"><button class="btn p" id="ps" type="button">Save</button>'+(p.isNew?'':'<button class="btn" id="pa" type="button">Ask the agent about it</button><button class="btn" id="pd" type="button">Delete</button>')+'</div><p class="fine">Weights are percentages of NAV. Weights under 100% leave the remainder in cash. Positions you save here are visible only to your account.</p></div>':'<div class="intro"><h2>Saved portfolios</h2><p>Save a book once, then refer to it by name in the agent, the playground and the API: "Run a risk report on Core Book".</p></div>')+'</div></div>';
+    $$('[data-n]',body).forEach(b=>b.onclick=()=>{const x=list.find(q=>q.name===b.dataset.n);cur=JSON.parse(JSON.stringify(x));draw();});
+    $('#np').onclick=()=>{cur=blank();draw();};
+    if(!p)return;
+    const rows=$('#pr'),tt=$('#tt');
+    const addRow=(t,w)=>{const tr=document.createElement('tr');tr.innerHTML='<td><input type="text" class="t mono" maxlength="15" aria-label="Ticker" style="width:110px;text-transform:uppercase"></td><td><input type="number" class="w mono" step="0.5" aria-label="Weight percent" style="width:110px"></td><td><button class="btn sm" type="button" aria-label="Remove position">×</button></td>';$('.t',tr).value=t;$('.w',tr).value=w;$('button',tr).onclick=()=>{tr.remove();tot();};$$('input',tr).forEach(i=>i.oninput=tot);rows.appendChild(tr);};
+    const read=()=>{const o={};$$('tr',rows).forEach(tr=>{const t=$('.t',tr).value.trim().toUpperCase(),w=parseFloat($('.w',tr).value);if(t&&!isNaN(w))o[t]=w/100;});return o;};
+    const tot=()=>{const w=read(),v=Object.values(w),net=v.reduce((a,b)=>a+b,0),gr=v.reduce((a,b)=>a+Math.abs(b),0);tt.textContent='Gross '+(gr*100).toFixed(1)+'% · Net '+(net*100).toFixed(1)+'% · Cash '+((1-net)*100).toFixed(1)+'%';};
+    Object.entries(p.weights).forEach(([t,w])=>addRow(t,+(w*100).toFixed(4)));tot();
+    $('#ap').onclick=()=>{addRow('','');};
+    $('#ps').onclick=async()=>{
+      const er=$('#pe');er.textContent='';const name=$('#pn').value.trim(),w=read();
+      if(!name){er.textContent='Give the portfolio a name.';return;}if(!Object.keys(w).length){er.textContent='Add at least one position.';return;}
+      try{const saved=await api('/v1/portfolios/'+encodeURIComponent(name),{method:'PUT',body:{weights:w,nav_usd:parseFloat($('#pv').value)||1e6}});list=await api('/v1/portfolios');cur=JSON.parse(JSON.stringify(saved));draw();}
+      catch(x){er.textContent=x.message;}
+    };
+    const pa=$('#pa');if(pa)pa.onclick=()=>{sessionStorageSet('aurelius_prefill','Run a risk report on my '+p.name+' portfolio, then tell me which regime it is in.');location.hash='#/app/agent';};
+    const pd=$('#pd');if(pd)pd.onclick=async()=>{if(pd.dataset.sure!=='1'){pd.dataset.sure='1';pd.textContent='Click again to delete';return;}try{await api('/v1/portfolios/'+encodeURIComponent(p.name),{method:'DELETE'});list=await api('/v1/portfolios');cur=null;draw();}catch(x){$('#pe').textContent=x.message;}};
+  };
+  cur=list[0]?JSON.parse(JSON.stringify(list[0])):blank();draw();
+};
+
+/* playground */
+APP.playground=async function(body){
+  await ensureCatalog();const ms=S.catalog?S.catalog.models:[];
+  body.innerHTML='<div class="panel" style="max-width:980px"><div class="row"><div class="field" style="max-width:320px"><label for="pm">Model</label><select id="pm">'+ms.map(m=>'<option value="'+esc(m.name)+'">'+esc(m.title)+' · '+esc(m.name)+'</option>').join('')+'</select></div><button class="btn p" id="pr" type="button">Run</button><span class="totals" id="ps"></span></div>'+
+  '<div class="field"><label for="pj">Request body (JSON)</label><textarea id="pj" class="mono" rows="10" spellcheck="false"></textarea></div><div class="err" id="pe" role="alert"></div>'+
+  '<div><div class="pre-h"><span>Same call from code</span><button class="btn sm" id="pc" type="button">Copy</button></div><pre class="wrap" id="pcurl"></pre></div>'+
+  '<div><div class="pre-h"><span>Response</span></div><pre id="po" style="max-height:480px;min-height:60px">Run a model to see its response.</pre></div><p class="fine">The playground uses your session. From code, use an API key.</p></div>';
+  const sel=$('#pm'),ta=$('#pj');
+  const setEx=()=>{const m=ms.find(x=>x.name===sel.value);ta.value=JSON.stringify(m.example,null,2);curlUp();};
+  const curlUp=()=>{let b;try{b=JSON.parse(ta.value);}catch(e){b={};}$('#pcurl').textContent=curl(sel.value,b);};
+  sel.onchange=setEx;ta.oninput=curlUp;$('#pc').onclick=e=>copy($('#pcurl').textContent,e.target);setEx();
+  $('#pr').onclick=async()=>{
+    const er=$('#pe'),out=$('#po'),b=$('#pr');er.textContent='';let j;
+    try{j=JSON.parse(ta.value);}catch(e){er.textContent='That is not valid JSON: '+e.message;return;}
+    b.disabled=true;out.textContent='Running…';const t0=performance.now();
+    try{const r=await api('/v1/models/'+sel.value,{method:'POST',body:j});out.textContent=JSON.stringify(r.result,null,2);$('#ps').textContent='200 · '+r.elapsed_ms+' ms server · '+Math.round(performance.now()-t0)+' ms total';}
+    catch(x){out.textContent='';er.textContent=x.status+' · '+x.message;$('#ps').textContent='';}
+    b.disabled=false;
+  };
+};
+
+/* api keys */
+APP.keys=async function(body){
+  const draw=async(fresh)=>{
+    const keys=await api('/v1/keys');
+    body.innerHTML='<div class="panel" style="max-width:860px"><div><h2 style="font-size:26px">API keys</h2><p class="fine" style="margin-top:6px">Keys act as your account: they can run models and read your saved portfolios. Store them in a secrets manager. Only a hash is kept here.</p></div>'+
+    (fresh?'<div class="keybox"><b>Copy this key now. It will not be shown again.</b><code id="nk"></code><div><button class="btn sm" id="ck" type="button">Copy key</button></div></div>':'')+
+    '<div class="row"><div class="field" style="max-width:320px"><label for="kn">Name</label><input id="kn" type="text" maxlength="60" placeholder="Risk desk notebook"></div><button class="btn p" id="kc" type="button">Create key</button></div><div class="err" id="ke" role="alert"></div>'+
+    '<div class="tblwrap" style="margin:0"><table><thead><tr><th>Name</th><th>Prefix</th><th>Created</th><th>Last used</th><th></th></tr></thead><tbody>'+(keys.length?keys.map(k=>'<tr><td>'+esc(k.name)+'</td><td class="m">'+esc(k.prefix)+'…</td><td>'+esc(fmtTs(k.created_at))+'</td><td>'+esc(fmtTs(k.last_used))+'</td><td><button class="btn sm" data-r="'+k.id+'" type="button">Revoke</button></td></tr>').join(''):'<tr><td colspan="5" class="fine">No active keys.</td></tr>')+'</tbody></table></div></div>';
+    if(fresh){$('#nk').textContent=fresh;$('#ck').onclick=e=>copy(fresh,e.target);}
+    $('#kc').onclick=async()=>{const n=$('#kn').value.trim();if(!n){$('#ke').textContent='Name the key so you can tell it apart later.';return;}try{const r=await api('/v1/keys',{method:'POST',body:{name:n}});await draw(r.key);}catch(x){$('#ke').textContent=x.message;}};
+    $$('[data-r]').forEach(b=>b.onclick=async()=>{if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='Confirm';return;}try{await api('/v1/keys/'+b.dataset.r,{method:'DELETE'});await draw();}catch(x){$('#ke').textContent=x.message;}});
+  };
+  await draw();
+};
+
+/* first sign-in: choose your own password */
+function forcePw(v){
+  v.innerHTML='<div class="wrap app"><div class="panel" style="max-width:460px;margin:40px auto"><div><h2 style="font-size:26px">Set your password</h2><p class="fine" style="margin-top:6px">Your administrator issued a temporary password. Choose your own to continue. At least 12 characters.</p></div>'+
+  '<form class="form" id="pf" novalidate><div class="field"><label for="p0">Temporary password</label><input id="p0" type="password" autocomplete="current-password"></div><div class="field"><label for="p1">New password</label><input id="p1" type="password" autocomplete="new-password"></div><div class="field"><label for="p2">Repeat new password</label><input id="p2" type="password" autocomplete="new-password"></div><div class="err" id="pe" role="alert"></div><button class="btn p" type="submit">Save and continue</button></form></div></div>';
+  $('#pf').onsubmit=async e=>{e.preventDefault();const er=$('#pe');er.textContent='';
+    if($('#p1').value!==$('#p2').value){er.textContent='The new passwords do not match.';return;}
+    try{await api('/v1/auth/password',{method:'POST',body:{current:$('#p0').value,new:$('#p1').value}});S.me=await api('/v1/me');renderChrome();location.hash='#/app';viewApp(v,{tab:'agent'});}catch(x){er.textContent=x.message;}};
+}
+
+/* admin: issue and manage sign-ins */
+APP.admin=async function(body){
+  let fresh=null;
+  const draw=async()=>{
+    const users=await api('/v1/admin/users');
+    body.innerHTML='<div class="panel" style="max-width:1000px"><div><h2 style="font-size:26px">Accounts</h2><p class="fine" style="margin-top:6px">Issue a sign-in, change a role, disable access or reset a password. You see account details only, never portfolios or conversations. Every change is recorded in Activity.</p></div>'+
+    (fresh?'<div class="keybox"><b>Temporary password for '+esc(fresh.email)+'. Copy it now. It will not be shown again.</b><code id="tp"></code><div><button class="btn sm" id="cp2" type="button">Copy password</button></div><p class="fine" style="margin-top:8px">Send it over a channel you trust. They will be asked to choose their own password at first sign-in.</p></div>':'')+
+    '<div class="row"><div class="field" style="max-width:260px"><label for="ne">Email</label><input id="ne" type="email" autocomplete="off" placeholder="analyst@firm.com"></div><div class="field" style="max-width:200px"><label for="nn">Name</label><input id="nn" type="text" maxlength="100" autocomplete="off"></div><div class="field" style="max-width:150px"><label for="nr">Role</label><select id="nr"><option value="analyst">Analyst</option><option value="admin">Admin</option></select></div><button class="btn p" id="nc" type="button">Issue sign-in</button></div><div class="err" id="ae" role="alert"></div>'+
+    '<div class="tblwrap" style="margin:0"><table><thead><tr><th>Account</th><th>Role</th><th>Status</th><th>Last sign-in</th><th>Keys</th><th>Portfolios</th><th></th></tr></thead><tbody>'+
+    users.map(u=>{const me=u.email===S.me.email;return '<tr><td>'+esc(u.email)+(u.name?'<br><span class="fine">'+esc(u.name)+'</span>':'')+'</td><td>'+esc(u.role)+'</td><td>'+(u.disabled?'Disabled':u.must_change?'Invited':'Active')+'</td><td>'+esc(fmtTs(u.last_login))+'</td><td>'+u.keys+'</td><td>'+u.portfolios+'</td><td style="white-space:nowrap">'+
+      (me?'<span class="fine">You</span>':'<button class="btn sm" data-a="role" data-id="'+u.id+'" data-v="'+(u.role==='admin'?'analyst':'admin')+'" type="button">Make '+(u.role==='admin'?'analyst':'admin')+'</button> <button class="btn sm" data-a="dis" data-id="'+u.id+'" data-v="'+(u.disabled?'0':'1')+'" type="button">'+(u.disabled?'Enable':'Disable')+'</button> <button class="btn sm" data-a="reset" data-id="'+u.id+'" type="button">Reset password</button> <button class="btn sm" data-a="keys" data-id="'+u.id+'" type="button">Revoke keys</button>')+'</td></tr>';}).join('')+'</tbody></table></div></div>';
+    if(fresh){$('#tp').textContent=fresh.pw;$('#cp2').onclick=e=>copy(fresh.pw,e.target);}
+    const fail=x=>{$('#ae').textContent=x.message;};
+    $('#nc').onclick=async()=>{const em=$('#ne').value.trim();if(!em){$('#ae').textContent='Enter an email address.';return;}
+      try{const r=await api('/v1/admin/users',{method:'POST',body:{email:em,name:$('#nn').value,role:$('#nr').value}});fresh={email:r.email,pw:r.temporary_password};await draw();}catch(x){fail(x);}};
+    $$('[data-a]',body).forEach(b=>b.onclick=async()=>{
+      if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='Confirm';return;}
+      const id=b.dataset.id,a=b.dataset.a;
+      try{
+        if(a==='role')await api('/v1/admin/users/'+id,{method:'PATCH',body:{role:b.dataset.v}});
+        else if(a==='dis')await api('/v1/admin/users/'+id,{method:'PATCH',body:{disabled:b.dataset.v==='1'}});
+        else if(a==='reset'){const r=await api('/v1/admin/users/'+id+'/reset-password',{method:'POST'});fresh={email:r.email,pw:r.temporary_password};}
+        else if(a==='keys')await api('/v1/admin/users/'+id+'/revoke-keys',{method:'POST'});
+        if(a!=='reset')fresh=null;await draw();
+      }catch(x){fail(x);}});
+  };
+  await draw();
+};
+
+/* activity */
+APP.activity=async function(body){
+  const rows=await api('/v1/audit'),admin=S.me&&S.me.role==='admin';
+  body.innerHTML='<div class="panel"><div><h2 style="font-size:26px">Activity</h2><p class="fine" style="margin-top:6px">'+(admin?'Recent events across all accounts.':'Your recent events.')+' Portfolio contents are never recorded.</p></div><div class="tblwrap" style="margin:0"><table><thead><tr><th>Time</th>'+(admin?'<th>Account</th>':'')+'<th>Event</th><th>Detail</th></tr></thead><tbody>'+(rows.length?rows.map(r=>'<tr><td class="m">'+esc(fmtTs(r.ts))+'</td>'+(admin?'<td>'+esc(r.email||'—')+'</td>':'')+'<td>'+esc(r.event)+'</td><td class="m">'+esc(r.detail)+'</td></tr>').join(''):'<tr><td colspan="4" class="fine">Nothing yet.</td></tr>')+'</tbody></table></div></div>';
+};
+
+/* ---------- boot ---------- */
+(async function boot(){
+  try{S.health=await api('/v1/health');}catch(e){S.health=null;}
+  try{S.me=await api('/v1/me');}catch(e){S.me=null;}
+  await ensureCatalog();
+  addEventListener('hashchange',route);
+  route();
+})();
+</script>
+</body>
+</html>
